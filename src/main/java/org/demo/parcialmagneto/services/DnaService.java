@@ -109,21 +109,25 @@ public class DnaService {
     public boolean analyzeDna(String[] dna) {
         String secuenciaDNA = String.join(",", dna);
 
-        Optional<Dna> existingDna = dnaRepository.findByDna(secuenciaDNA);
+        try {
+            Optional<Dna> existingDna = dnaRepository.findByDna(secuenciaDNA);
 
-        if (existingDna.isPresent()) {
-            return existingDna.get().isMutant();
+            if (existingDna.isPresent()) {
+                return existingDna.get().isMutant();
+            }
+
+            boolean isMutant = isMutant(dna);
+
+            Dna dnaEntity = Dna.builder()
+                    .dna(secuenciaDNA)
+                    .isMutant(isMutant)
+                    .build();
+
+            dnaRepository.save(dnaEntity);
+            return isMutant;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al analizar ADN", e);
         }
-
-        boolean isMutant = isMutant(dna);
-
-        Dna dnaEntity = Dna.builder()
-                           .dna(secuenciaDNA)
-                           .isMutant(isMutant)
-                           .build();
-
-        dnaRepository.save(dnaEntity);
-        return isMutant(dna);
-
     }
 }

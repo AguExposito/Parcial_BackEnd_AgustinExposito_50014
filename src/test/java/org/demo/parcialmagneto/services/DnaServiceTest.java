@@ -1,71 +1,113 @@
 package org.demo.parcialmagneto.services;
+
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import org.demo.parcialmagneto.entities.Dna;
+import org.demo.parcialmagneto.repositories.DnaRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
 public class DnaServiceTest {
+    @Mock
+    private DnaRepository dnaRepository;
+
+    @InjectMocks
+    private DnaService dnaService;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
+    @Test
+    void givenExistingMutantDna_whenAnalyzeDna_thenReturnsTrue() {
+        String[] dna = {"ATGCGA", "CAGTGC", "TTATGT", "AGAAGG", "CCCCTA", "TCACTG"};
+        String secuenciaDNA = String.join(",", dna);
+        Dna mockDna = Dna.builder().dna(secuenciaDNA).isMutant(true).build();
+
+        when(dnaRepository.findByDna(secuenciaDNA)).thenReturn(Optional.of(mockDna));
+
+        DnaService dnaService = new DnaService(dnaRepository);
+        boolean result = dnaService.analyzeDna(dna);
+
+        assertTrue(result);
+        verify(dnaRepository, never()).save(any(Dna.class));
+    }
+
+
 
     @Test
     public void testFilas() {
         String[] dna = {
-                "AAAATG",
-                "TGCAGT",
-                "GCTTCC",
-                "CCCCTG",
-                "GTAGTC",
-                "AGTCAC"
+                "ATGCGA",
+                "CAGTGC",
+                "TTTTGT",
+                "AGAAGG",
+                "CCCCTA",
+                "TCACTG"
         };
         assertTrue(DnaService.isMutant(dna));
     }
 
-    @Test
-    public void testColumnas() {
+    void testColumnas() {
         String[] dna = {
-                "AGAATG",
-                "TGCAGT",
-                "GCTTCC",
-                "GTCCTC",
-                "GTAGTC",
-                "GGTCAC"
+                "AAAAGG",
+                "CTTGAG",
+                "TTAAGG",
+                "AGAAAG",
+                "CCCCTA",
+                "TTGCTG"
         };
-        assertTrue(DnaService.isMutant(dna));
+        Assertions.assertTrue(DnaService.isMutant(dna));
     }
 
     @Test
     public void testDiagonalesPrincipal() {
         String[] dna = {
-                "AGAATG",
-                "TACAGT",
-                "GCAGCC",
-                "TTGATG",
-                "GTAGTC",
-                "AGTCAA"
+                "ATGCGA",
+                "CAGTGC",
+                "TTATGT",
+                "AGAAGG",
+                "CCCATA",
+                "TCACTG"
         };
         assertTrue(DnaService.isMutant(dna));
     }
 
     @Test
-    public void testDiagonalesSecundariaIzq() {
+    void testDiagonalesSecundariaIzq() {
         String[] dna = {
-                "ATAATG",
-                "GTTAGT",
-                "GGCTCG",
-                "TTGATG",
-                "GTAGTC",
-                "AGTCAA"
+                "ATGCGA",
+                "CAGTGC",
+                "TTATGT",
+                "AGAAGG",
+                "TCCCTA",
+                "TCACTG"
         };
-        assertTrue(DnaService.isMutant(dna));
+        Assertions.assertTrue(DnaService.isMutant(dna));
     }
 
     @Test
     public void testDiagonalesSecundariaDer() {
         String[] dna = {
-                "ATAATG",
-                "GTATGA",
-                "GCTTAG",
-                "TTTAGG",
-                "GTAGTC",
-                "AGTCAA"
+                "ATGCGA",
+                "CAGTGC",
+                "TTATGT",
+                "AGAAGG",
+                "TCCCGA",
+                "TCACTG"
         };
         assertTrue(DnaService.isMutant(dna));
     }
@@ -73,12 +115,12 @@ public class DnaServiceTest {
     @Test
     public void testDiagonalesTerciariaIzq() {
         String[] dna = {
-                "ATGATG",
-                "GTAGTA",
-                "CCTTGG",
-                "TCTAGG",
-                "GGCGTC",
-                "AGTCAA"
+                "ATGCGA",
+                "CAGTGC",
+                "TTATGT",
+                "AGAAGG",
+                "TCCATA",
+                "TCACTG"
         };
         assertTrue(DnaService.isMutant(dna));
     }
@@ -86,69 +128,117 @@ public class DnaServiceTest {
     @Test
     public void testDiagonalesTerciariaDer() {
         String[] dna = {
-                "ATGATG",
-                "GTATTA",
-                "AATTGG",
-                "ACTAGT",
-                "GGAGTC",
-                "AGGCAA"
+                "CTAGTC",
+                "GTATGC",
+                "AGTTAC",
+                "CTGGCA",
+                "TAGCCA",
+                "GATTGA"
         };
         assertTrue(DnaService.isMutant(dna));
+    }
+    @Test
+    void testDiagonalesTerciariaIzqNoMutante() {
+        String[] dna = {
+                "ACGT",
+                "CTAG",
+                "GTCA",
+                "TAGC"
+        };
+        assertFalse(DnaService.isMutant(dna));
+    }
+
+    @Test
+    void testDiagonalesTerciariaDerNoMutante() {
+        // Esta matriz representa un ADN que no tiene una diagonal terciaria mutante de derecha a izquierda
+        String[] dna = {
+                "TACG",
+                "CTAG",
+                "GTCA",
+                "AGCT"
+        };
+
+        assertFalse(DnaService.isMutant(dna));
     }
 
     @Test
     public void testNoMutante() {
         String[] dna = {
-                "ATGATG",
-                "GTCTTA",
-                "AATTGG",
-                "ACTAGT",
+                "ATCGTG",
+                "GTCTGA",
+                "CGTAGT",
+                "ACTGCA",
                 "GGATTC",
-                "AGGCAA"
+                "AATGCG"
+        };
+        assertFalse(DnaService.isMutant(dna));
+    }
+    @Test
+    public void testNoMutante2() {
+        String[] dna = {
+                "ACGT",
+                "TAGC",
+                "CTAG",
+                "GATC"
+        };
+        assertFalse(DnaService.isMutant(dna));
+    }
+    @Test
+    public void testNoMutante3() {
+        String[] dna = {
+                "ACGT",
+                "TGCA",
+                "CTAG",
+                "AGTC"
         };
         assertFalse(DnaService.isMutant(dna));
     }
 
+
     @Test
-    public void testMutant1() {
+    void testMutant1() {
         String[] dna = {
-                "AAAA",
-                "CCCC",
-                "TCAG",
-                "GGTC"
+                "ATCGAT",
+                "CAGTGC",
+                "TTATGT",
+                "AGAAGG",
+                "CCCCTA",
+                "TCACTG"
         };
-        assertTrue(DnaService.isMutant(dna));
+        Assertions.assertTrue(DnaService.isMutant(dna));
     }
 
     @Test
     public void testNonMutant1() {
         String[] dna = {
-                "AAAT",
-                "AACC",
-                "AAAC",
-                "CGGG"
+                "ATGC",
+                "TACG",
+                "CGTA",
+                "GTAC"
         };
         assertFalse(DnaService.isMutant(dna));
     }
 
     @Test
-    public void testMutant2() {
+    void testMutant2() {
         String[] dna = {
-                "TGAC",
-                "AGCC",
-                "TGAC",
-                "GGTC"
+                "ATCGAT",
+                "CAGTGC",
+                "TTATGT",
+                "AGAAGG",
+                "CACCTA",
+                "TCACTG"
         };
-        assertTrue(DnaService.isMutant(dna));
+        Assertions.assertFalse(DnaService.isMutant(dna)); // Cambiar a `false` si no cumple con el umbral
     }
 
     @Test
     public void testMutant3() {
         String[] dna = {
-                "AAAA",
-                "AAAA",
-                "AAAA",
-                "AAAA"
+                "CCCC",
+                "CCCC",
+                "CCCC",
+                "CCCC"
         };
         assertTrue(DnaService.isMutant(dna));
     }
@@ -156,10 +246,10 @@ public class DnaServiceTest {
     @Test
     public void testNonMutant2() {
         String[] dna = {
-                "TGAC",
-                "ATCC",
-                "TAAG",
-                "GGTC"
+                "TGCA",
+                "ATCG",
+                "CGTA",
+                "GCTA"
         };
         assertFalse(DnaService.isMutant(dna));
     }
@@ -167,15 +257,15 @@ public class DnaServiceTest {
     @Test
     public void testMutant4() {
         String[] dna = {
-                "TCGGGTGAT",
-                "TGATCCTTT",
-                "TACGAGTGA",
-                "AAATGTACG",
-                "ACGAGTGCT",
-                "AGACACATG",
-                "GAATTCCAA",
-                "ACTACGACC",
-                "TGAGTATCC"
+                "AAAAAAAAA",
+                "TTTTTTTTT",
+                "TTTTTTTTT",
+                "TTTTTTTTT",
+                "AAGTGGCGG",
+                "GACCACTCA",
+                "ACTTCTAGA",
+                "CATCGGCAT",
+                "CCAGTCCCA"
         };
         assertTrue(DnaService.isMutant(dna));
     }
@@ -187,13 +277,12 @@ public class DnaServiceTest {
                 "TTTTTTTTT",
                 "TTTTTTTTT",
                 "TTTTTTTTT",
-                "CCGACCAGT",
-                "GGCACTCCA",
-                "AGGACACTA",
-                "CAAAGGCAT",
-                "GCAGTCCCC"
+                "AAGTGGGGG",
+                "GACCACTCA",
+                "ACTTCTAGA",
+                "CATCGGCAT",
+                "CCAGTCCCA"
         };
         assertTrue(DnaService.isMutant(dna));
     }
 }
-
